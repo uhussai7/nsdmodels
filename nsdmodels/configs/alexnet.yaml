@@ -1,0 +1,9 @@
+BACKBONE:
+  NAME: 'alexnet'
+  FILE: 'alexnet.pt'   
+  FINETUNE: False
+  LAYERS_TO_EXTRACT: ['features.2','features.5','features.7','features.9','features.12']
+  PERCENT_OF_CHANNELS: 100
+  INPUT_SIZE: (1,3,256,256)
+
+  
