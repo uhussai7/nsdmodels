@@ -1,6 +1,13 @@
 from collections import OrderedDict
 import torch
 from tqdm import tqdm
+from torch import matmul
+
+def channel_summer(sd):
+    N=0
+    for key in sd.keys():
+        N+=len(sd[key])
+    return N
 
 def dic_mean_2d(dic,layers):
     for key in layers:
@@ -31,7 +38,7 @@ def channel_activations(layers_2d,feature_extractor,imgs,batch_size=8):
 
     #go through remaining images and concatenate into outs_2d
     imgs=imgs[batch_size:] 
-    print('Making predictions from stimuli')
+    print('Making predictions from stimuli to sort channels by standard deviation') 
     for i in tqdm(range(batch_size,N,batch_size)):
         features=feature_extractor(imgs[i:i+batch_size].to(device))
         for layer in layers_2d:
@@ -79,7 +86,9 @@ def channels_to_use(layers_2d,feature_extractor,imgs,batch_size=8,max_channels=N
         max_channels: maximum number of channels to take
         max_percent: maximum percentage of channels to take (priority over max_channels)
     """
-    activations_2d=channel_activations(layers_2d,feature_extractor,imgs,batch_size)
+    #TODO: maybe add cuda at this level if availble
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    activations_2d=channel_activations(layers_2d,feature_extractor.to(device),imgs.to(device),batch_size)
     sd_2d=sorter(activations_2d,max_channels,max_percent)
     return sd_2d
 
