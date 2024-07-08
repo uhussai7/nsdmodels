@@ -54,12 +54,12 @@ def main():
     nsd_data.make_data_loaders(batch_size=cfg.TRAIN.BATCH_SIZE)
 
     #get the encoder
-    Nv=int(nsd_data.data[0]['Nv']) #number of voxels
-    enc=modules.LitEncoder(cfg,nsd_data.data_loaders_train[0])
+    #Nv=int(nsd_data.data[0]['Nv']) #number of voxels
+    #enc=modules.LitEncoder(cfg,nsd_data.data_loaders_train[0])
 
     #fit the model
-    trainer = modules.EncoderTrainer(cfg,subj=args.subj,max_epochs=cfg.TRAIN.MAX_EPOCHS)
-    trainer.fit(model=enc.cuda(), train_dataloaders=enc.encoder.data_loader)
+    #trainer = modules.EncoderTrainer(cfg,max_epochs=cfg.TRAIN.MAX_EPOCHS)
+    #trainer.fit(model=enc.cuda(), train_dataloaders=enc.encoder.data_loader)
 
 if __name__ == "__main__":
     main()

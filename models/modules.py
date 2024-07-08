@@ -11,16 +11,18 @@ import lightning as L
 from torch.optim.lr_scheduler import MultiStepLR, StepLR
 from torch.optim import Adam, SGD
 from pathlib import Path
+from yacs.config import CfgNode
 
 class EncoderTrainer(L.Trainer):
     """
     Class for training the encoder
     """
-    def __init__(self,cfg,subj=1,*args,**kwargs): #we do per subject
+    def __init__(self,cfg,subj,*args,**kwargs): #we do per subject
         self.cfg=cfg
         self.subj=subj
         super().__init__(*args,
                         default_root_dir=self.create_dir_name(),**kwargs)
+        self.write_cfg_yaml()
 
     def create_dir_name(self): # we need to make sure all the models are in the right places
     #the main hyperparameters are backbone-name, finetune or not, percent of filter
@@ -31,6 +33,10 @@ class EncoderTrainer(L.Trainer):
                           'percent_channels-%d'%(int(self.cfg.BACKBONE.PERCENT_OF_CHANNELS))))
         self.out_path.mkdir(parents=True,exist_ok=True)
         return str(self.out_path)
+
+    def write_cfg_yaml(self):
+        with open(str(self.out_path)+'/config.yaml', 'w') as f:
+            f.write(self.cfg.dump())
 
 class LitEncoder(L.LightningModule):
     """
@@ -117,31 +123,44 @@ class Encoder(Module):
         self.rfs=ReceptiveField(self.Nv,self.rf_sizes,self.layer_to_rf_size,self.channel_basis)
         self.readout=EncoderReadOut(cfg,self.image_features,self.rfs,self.N_channels)
 
-    def get_imgs(self,N_imgs=None):
+    def get_imgs(self,N_imgs=15000):
         """
-        Extracts images from dataloader if self.imgs is None
+        Extracts images from dataloader if self.imgs is None, will extract up to
         """
+        print('Extracting images')
         if self.imgs is not None:
             return self.imgs
         else:
-            return torch.cat([ _[0] for _ in list(self.data_loader)])
+            N_imgs=min(N_imgs,self.data_loader.dataset.tensors[0].shape[0])
+            imgs=[]
+            for i,(img,fmri) in enumerate(self.data_loader):
+                imgs.append(img)
+                if len(imgs)*img.shape[0] >=N_imgs:
+                    break
+            imgs=torch.cat(imgs,dim=0)
+            print('Using %d imgs for sorting'%len(imgs))
+            return imgs
 
     def get_rf_sizes(self):
         """Gets the unique rf-sizes to make receptive fields"""
-        self.layer_shps=layer_shapes(self.image_features,self.cfg.BACKBONE.INPUT_SIZE)
+        print('Calculating rf sizes')
+        self.layer_shps=layer_shapes(self.image_features,(1,3)+self.cfg.BACKBONE.INPUT_SIZE)
         (
             self.rf_sizes, #unique rf_sizes
             self.layer_to_rf_size, #index of rf_size for each layer 
             self.channels #channels in each layer
 
         ) = unique_2d_layer_shapes(self.cfg.BACKBONE.LAYERS_TO_EXTRACT,self.layer_shps)
-        
+        print('Done')
+
     def get_channel_basis(self,imgs):
+        print('Computing channel basis')
         self.channel_basis=channels_to_use(self.cfg.BACKBONE.LAYERS_TO_EXTRACT,
                                            self.image_features,
                                            imgs,
                                            self.cfg.BACKBONE.PERCENT_OF_CHANNELS)
         self.N_channels=channel_summer(self.channel_basis)
+        print('Done')
 
     def forward(self,x):
         return self.readout(x)

@@ -74,7 +74,7 @@ def sorter(activations,max_channels=None,max_percent=None):
             sd[key] = aa[:max_channels]
     return sd
 
-def channels_to_use(layers_2d,feature_extractor,imgs,batch_size=8,max_channels=None,max_percent=None):
+def channels_to_use(layers_2d,feature_extractor,imgs,batch_size=1,max_channels=None,max_percent=None):
     """
     Returns a dictionary of sorted channel indices where each key is a provided layer to extract
 
@@ -88,7 +88,7 @@ def channels_to_use(layers_2d,feature_extractor,imgs,batch_size=8,max_channels=N
     """
     #TODO: maybe add cuda at this level if availble
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    activations_2d=channel_activations(layers_2d,feature_extractor.to(device),imgs.to(device),batch_size)
+    activations_2d=channel_activations(layers_2d,feature_extractor.to(device),imgs,batch_size)
     sd_2d=sorter(activations_2d,max_channels,max_percent)
     return sd_2d
 

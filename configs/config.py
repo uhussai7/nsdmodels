@@ -6,6 +6,7 @@ _C = CN()
 _C.SYSTEM = CN()
 _C.PATHS = CN()
 _C.FMRI=CN()
+_C.TRAIN=CN()
 _C.BACKBONE=CN()
 
 #Paths
@@ -16,7 +17,8 @@ _C.PATHS.STIM_ROOT=os.path.join(_C.PATHS.NSD_ROOT,'nsddata_stimuli','stimuli','n
 _C.PATHS.FREESURFER_ROOT=os.path.join(_C.PATHS.NSD_ROOT,'freesurfer') #freesurfer path for nsd subjects
 _C.PATHS.BACKBONE_FILES=os.environ.get('BACKBONE_ROOT_PATH')
 _C.PATHS.NSD_PREPROC=os.environ.get('NSD_PREPROC_PATH') #environment variable 
-_C.PATHS.NSD_ENCODER=os.environ.get('NSD_ENCODER_PATH') #environment variable
+_C.PATHS.NSD_ENCODER=os.environ.get('NSD_ENCODER_PATH') #environment variable #this is where models are saved
+_C.PATHS.NSD_CONFIG=os.environ.get('NSD_CONFIG_PATH')
 
 #Files
 _C.PATHS.EXP_DESIGN_FILE=os.path.join(_C.PATHS.NSD_ROOT,'nsddata','experiments','nsd','nsd_expdesign.mat')
@@ -28,6 +30,10 @@ _C.FMRI.FUNC_PREPROC='betas_fithrf_GLMdenoise_RR'
 
 #File extension for data
 _C.FMRI.LOAD_EXT='.nii.gz'
+
+#Training params
+_C.TRAIN.MAX_EPOCHS=10
+_C.TRAIN.BATCH_SIZE=16
 
 #Default backbone
 _C.BACKBONE.NAME='alexnet'

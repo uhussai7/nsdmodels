@@ -13,7 +13,6 @@ import numpy as np
 import lightning as L
 import matplotlib.pyplot as plt
 
-
 def test_rf():
     """
     Simple test for rf sizes
@@ -97,7 +96,6 @@ def test_nsddata():
     print('Done')
     print('From the data_loaders the train dataset has shapes:',nsd_data.data_loaders_train[0].dataset.tensors[0].shape,
                                                                 nsd_data.data_loaders_train[0].dataset.tensors[1].shape)
-
 
 def test_trainer():
     """
