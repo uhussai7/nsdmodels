@@ -39,10 +39,11 @@ _C.TRAIN.BATCH_SIZE=16
 _C.BACKBONE.NAME='alexnet'
 _C.BACKBONE.FILE= 'alexnet.pt'   
 _C.BACKBONE.FINETUNE= False
+_C.BACKBONE.TEXT= False
 _C.BACKBONE.LAYERS_TO_EXTRACT= ['features.2','features.5','features.7','features.9','features.12']
 _C.BACKBONE.PERCENT_OF_CHANNELS= 100
 _C.BACKBONE.INPUT_SIZE= (256,256)
-  
+_C.BACKBONE.NT=None #output vector size of text encoder
 
 def get_cfg_defaults():
   """Get a yacs CfgNode object with default values for my_project."""

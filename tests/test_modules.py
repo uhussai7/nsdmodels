@@ -43,6 +43,13 @@ def test_training_prediction(N=10000,N_val=1000,batch_size=1,max_epochs=10):
     nsd_data=NsdData([1])
     nsd_data.load_preprocessed(cfg.BACKBONE.INPUT_SIZE)
 
+    #handle text or not for data_loaders
+    if cfg.BACKBONE.TEXT == True:
+        import clip
+        nsd_data.make_data_loaders(batch_size=cfg.TRAIN.BATCH_SIZE,text=True,tokenizer=clip.tokenize)
+    else:
+        nsd_data.make_data_loaders(batch_size=cfg.TRAIN.BATCH_SIZE)
+
     #use subset dataset
     data_loader_train = DataLoader(
                                     Subset(nsd_data.data_loaders_train[0].dataset,np.arange(0,N)),
@@ -51,10 +58,10 @@ def test_training_prediction(N=10000,N_val=1000,batch_size=1,max_epochs=10):
     
     #get an encoder
     Nv=nsd_data.data_loaders_train[0].dataset.tensors[0]
-    enc=modules.LitEncoder(cfg,data_loader_train)
+    enc=modules.LitEncoder(cfg,data_loader_train,imgs=nsd_data.data_loaders_train[0].dataset.tensors[0][:10000])
 
     #fit the model
-    trainer = modules.EncoderTrainer(cfg,max_epochs=max_epochs)
+    trainer = modules.EncoderTrainer(cfg,1,max_epochs=max_epochs)
     trainer.fit(model=enc.cuda(), train_dataloaders=enc.encoder.data_loader)
 
     #make predictions on validation dataset

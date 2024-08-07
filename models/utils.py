@@ -2,6 +2,17 @@ from collections import OrderedDict
 import torch
 from tqdm import tqdm
 from torch import matmul
+from pathlib import Path
+import os
+
+def create_dir_name(cfg,subj):
+    out_path=Path(os.path.join(cfg.PATHS.NSD_ENCODER,'subj%02d'%subj,cfg.BACKBONE.NAME,
+                          'finetune-'+str(cfg.BACKBONE.FINETUNE),
+                          'percent_channels-%d'%(int(cfg.BACKBONE.PERCENT_OF_CHANNELS))))
+    out_path.mkdir(parents=True,exist_ok=True)
+
+    return str(out_path)
+
 
 def channel_summer(sd):
     N=0

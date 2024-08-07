@@ -7,6 +7,10 @@ from nsdhandling.core import NsdData
 import numpy as np
 import matplotlib.pyplot as plt
 import argparse
+import os
+from models.utils import create_dir_name
+from pathlib import Path
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -37,12 +41,20 @@ def main():
         help='Config file name, if not done, please define config folder as environment variable named NSD_CONFIG_PATH'
     )
 
+    parser.add_argument(
+        '-v', '--version',
+        type=int,
+        default=None,
+        help='If continuing from last checkpoint provide the version'
+    )
+
     args=parser.parse_args()
     print(args)
 
     #sort out the config file
     cfg=get_cfg_defaults()
     cfg.merge_from_file(cfg.PATHS.NSD_CONFIG+args.config)
+    args.percent=100 if args.percent is None else args.percent
     opts=["BACKBONE.FINETUNE",args.finetune,"BACKBONE.PERCENT_OF_CHANNELS",args.percent]
     cfg.merge_from_list(opts)
     cfg.freeze()
@@ -51,15 +63,39 @@ def main():
     #load the subject data
     nsd_data=NsdData([args.subj])
     nsd_data.load_preprocessed(cfg.BACKBONE.INPUT_SIZE)
-    nsd_data.make_data_loaders(batch_size=cfg.TRAIN.BATCH_SIZE)
+    
+    #handle text or not for data_loaders
+    if cfg.BACKBONE.TEXT == True:
+        import clip
+        nsd_data.make_data_loaders(batch_size=cfg.TRAIN.BATCH_SIZE,text=True,tokenizer=clip.tokenize)
+    else:
+        nsd_data.make_data_loaders(batch_size=cfg.TRAIN.BATCH_SIZE)
 
     #get the encoder
     Nv=int(nsd_data.data[0]['Nv']) #number of voxels
     enc=modules.LitEncoder(cfg,nsd_data.data_loaders_train[0])
 
-    #fit the model
-    trainer = modules.EncoderTrainer(cfg,subj=args.subj,max_epochs=cfg.TRAIN.MAX_EPOCHS)
-    trainer.fit(model=enc.cuda(), train_dataloaders=enc.encoder.data_loader)
+    #get the trainer
+    #handle version, if specified
+    if args.version is not None:
+        print('Checking version provided')
+        checkpoint_path=str(create_dir_name(cfg,args.subj))+'/lightning_logs/version_%d/checkpoints/'%args.version
+        checkpoints=os.listdir(checkpoint_path)
+        print('These are the checkpoints',checkpoints)
+        epochs=np.asarray([int(checkpoint.split('epoch=')[1].split('-')[0]) for checkpoint in checkpoints])
+        max_epoch_ind=np.argsort(epochs)[-1]
+        max_epoch=epochs[max_epoch_ind]
+        if max_epoch<cfg.TRAIN.MAX_EPOCHS-1:
+            resume_checkpoint=checkpoint_path+checkpoints[max_epoch_ind]
+            print('Resuming from',resume_checkpoint)
+            trainer = modules.EncoderTrainer(cfg,subj=args.subj,
+                                             max_epochs=cfg.TRAIN.MAX_EPOCHS)
+            trainer.fit(model=enc.cuda(), train_dataloaders=enc.encoder.data_loader,
+                        ckpt_path=resume_checkpoint)
+
+    else: #this will create new version
+        trainer = modules.EncoderTrainer(cfg,subj=args.subj,max_epochs=cfg.TRAIN.MAX_EPOCHS)
+        trainer.fit(model=enc.cuda(), train_dataloaders=enc.encoder.data_loader)
 
 if __name__ == "__main__":
     main()

@@ -1,0 +1,5 @@
+CMD: ./submitter.sh 1 False 100 clip_text.yaml
+START_TIME: Sun Aug 4 11:31:02 AM EDT 2024
+/local/var/spool/slurmd/job23837129/slurm_script: line 14: ./submitter.sh: No such file or directory
+RETURNVAL=127
+END_TIME: Sun Aug 4 11:31:02 AM EDT 2024
